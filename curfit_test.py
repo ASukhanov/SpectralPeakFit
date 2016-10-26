@@ -1,8 +1,8 @@
 ''' Curve fitting test program
 '''
 #__version__ = 'v01 2016-10-23' # Extracted from curfit.py
-__version__ = 'v02 2016-10-25' # gen_peaks parameters, print helpers, ipython example.
-print('curfit_test version:'+str(__version__))
+#__version__ = 'v02 2016-10-25' # gen_peaks parameters, print helpers, ipython example.
+__version__ = 'v03 2016-10-26' # scaleY: scale parameter added, default:'dBm'.
 
 import numpy as np
 from scipy.optimize import curve_fit
@@ -13,6 +13,7 @@ from  timeit import default_timer as timer
 import curfit as cf
 import peakgen as pg
 
+print('curfit_test version:'+str(__version__))
 #'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 # This section is for standalone testing
 #
@@ -53,7 +54,7 @@ class cfTest():
         
     def new_guess(self, pars=gGuess):  # Change all guess prameters.
         self.guess = pars
-        print 'guess:', self.guess
+        print('guess:'+', '.join(['%0.2g' %i for i in self.guess]))
         
     def change_guess_sigmas(self, vv): # Change guess sigmas
         self.guess[2], self.guess[5], self.guess[8] = vv,vv,vv        
@@ -63,12 +64,15 @@ class cfTest():
         self.change_guess_sigmas(self.filterWidth)
         print 'filterWidth and guess sigmas changed to ', self.filterWidth
         
-    def scaleY(self,yy):
-        # Y-scaling of plots
-        #self.yLabel='PSD[V**2/Hz]'
-        #return yy # no scaling
-        self.yLabel='dBm'
-        return cf.w2db(yy) # decibels
+    def scaleY(self,yy, scale='dBm'):
+    #def scaleY(self,yy, scale=''):
+        ''' Y-scaling of plots, uncomment one of two options: linear or logarithmic.'''
+        if scale == 'dBm':
+            self.yLabel='dBm'
+            yy = cf.w2db(yy)
+        else:
+            self.yLabel='PSD[V**2/Hz]'
+        return yy
            
     def run(self,block=True):
         plt.close()
@@ -91,13 +95,17 @@ class cfTest():
         start = timer()
         peaks = cf.peak_finder(filtered,self.filterWidth)
         end = timer()
-        if self.dbg & 0x1: print('peak finding time:'+str(end-start)+' s.') # ~0.5-1 ms 
-        if self.dbg & 0x1: print('Peaks found at x:'+str(cf.ind2par(peaks,self.nX))+', or samples:'+str(peaks))
+        if self.dbg & 0x1: 
+            print('peak finding time:'+str(end-start)+' s.') # ~0.5-1 ms 
+            print('Peaks found at x:'+str(cf.ind2par(peaks,self.nX))+', or samples:'+str(peaks)+
+                ', amplitudes:['+ ', '.join(['%0.2g' % i for i in filtered[peaks[:3]]])+']')
 
         # adjust guessed positions
         self.guess[1], self.guess[4], self.guess[7] = cf.ind2par(peaks[:3],self.nX)
         # adjust guessed amplitudes
-        self.guess[3], self.guess[6], self.guess[9] = filtered[peaks[:3]]
+        for ii in range(3):
+            self.guess[1+ii*3+2] = cf.amplitude2par(filtered[peaks[ii]],self.guess[1+ii*3+1])
+        print self.guess
 
         # fitting
         try:
@@ -189,21 +197,18 @@ if __name__ == "__main__":
         rPos = np.random.random()*0.4+0.3
         rAmp = 1e-9*(0.1+5*np.random.random())
         rs2 = 0.005 + 0.025*np.random.random()
-        #print rPos,rAmp
         cft.generate_peaks([0.25, 0.01,1e-9, rPos,rs2,rAmp, 0.75, 0.01, 1e-9])   
         cft.run(block=False)
-        #plt.show(block=False)
         plt.pause(1)
         
     '''
     # for pure python:
     cft = cfTest()
-    # Main Loop
     while 1:
-        cft.run()
-        cft.print_peakgen_params()
         rPos = np.random.random()*0.4+0.3
-        rAmp = 1e-10*(0.01+5*np.random.random())
-        print rPos,rAmp
-        cft.generate_peaks([0.25, 0.02,1.e-10, rPos,0.01,rAmp, 0.75, 0.02, 1e-10])
+        rAmp = 1e-9*(0.1+5*np.random.random())
+        rs2 = 0.005 + 0.025*np.random.random()
+        #print rPos,rAmp
+        cft.generate_peaks([0.25, 0.01,1e-9, rPos,rs2,rAmp, 0.75, 0.01, 1e-9])   
+        cft.run()
 

@@ -10,7 +10,6 @@ from scipy.optimize import curve_fit
 #
 gPeaks = [] # flat array of peak parameters
 
-# Helpers.
 def gaussian(xx, mu, sig):
     return 1./(np.sqrt(2.*np.pi)*sig)*np.exp(-np.power((xx - mu)/sig, 2.)/2)
     
@@ -33,14 +32,15 @@ def generate_peaks(xx, pars = None):
 
 # Internal helper function.
 def white_noise_psd(nSamples=201, samplingFrequency=0, powerDensity=1.e-6):
-	''' Generates samples of power spectrum density of white noise.'''
-        # It probably could be simplified to just quadratic noise.
-        # Note: sampling frequency only defines scale of the output frequencies
-        if samplingFrequency == 0: samplingFrequency = nSamples*2
-	noise_power = powerDensity * samplingFrequency / 2
-	xx = np.random.normal(scale=np.sqrt(noise_power), size=nSamples*2-1)
-        frequencies, powerDensities = signal.periodogram(xx, samplingFrequency)
-        return frequencies, powerDensities
+    ''' Generates samples of power spectrum density of white noise.'''
+    # It probably could be simplified to just quadratic noise.
+    # Note: sampling frequency only defines scale of the output frequencies
+    if samplingFrequency == 0:
+        samplingFrequency = nSamples*2
+    noise_power = powerDensity * samplingFrequency / 2
+    xx = np.random.normal(scale=np.sqrt(noise_power), size=nSamples*2-1)
+    frequencies, powerDensities = signal.periodogram(xx, samplingFrequency)
+    return frequencies, powerDensities
 
 #  Smeared signal generator.
 def smearSignal(signal,noiseLevel):
@@ -110,30 +110,27 @@ yLabel='dBm'
 
 if __name__ == "__main__":
 # The code below is skipped if file is imported
-  ix = np.arange(0, gNPoints, 1) 
-  xx = ind2par(ix,gNPoints)
-  print('Generating signal.')
-  noiseFreeSignal = generate_peaks(xx)
-  sigAmplitude = np.max(noiseFreeSignal)-gBaseLine
-  print('Peaks with max amplitude generated:'+str(gPeaks))
-  print('Signal amplitude:'+str(sigAmplitude)+', power:'+str(signalPower(noiseFreeSignal)))
-  noise = smearSignal(np.zeros(gNPoints),gFloor)
-  noiseRMS = np.std(noise)
-  plt.plot(scaleY(noise),label='noise')
-  #''
-  print('NoiseFloor:'+str(gFloor)+', noise RMS:'+str(noiseRMS)+', power:'+str(signalPower(noise)))
-  print('SNR:'+str(sigAmplitude/noiseRMS))
-  #plt.show()
-  while 1:
-    plt.plot(scaleY(noiseFreeSignal),label='Original')
-    #plot_original_samples()
-    yy = smearSignal(noiseFreeSignal,gFloor)
-    #yy = genPowerPeaksSmeared(xx,gNoise)
-    plt.plot(scaleY(yy),label='+ noise')
-    legend = plt.legend(loc='upper right', shadow=True)
-    plt.ylabel(yLabel)
-    plt.xlabel('Frequency')
-    if yLabel == 'dBm': plt.ylim([-110, -60])
-    plt.show()
+    ix = np.arange(0, gNPoints, 1) 
+    xx = ind2par(ix,gNPoints)
+    print('Generating signal.')
+    noiseFreeSignal = generate_peaks(xx)
+    sigAmplitude = np.max(noiseFreeSignal)-gBaseLine
+    print('Peaks with max amplitude generated:'+str(gPeaks))
+    print('Signal amplitude:'+str(sigAmplitude)+', power:'+str(signalPower(noiseFreeSignal)))
+    noise = smearSignal(np.zeros(gNPoints),gFloor)
+    noiseRMS = np.std(noise)
+    plt.plot(scaleY(noise),label='noise')
+    print('NoiseFloor:'+str(gFloor)+', noise RMS:'+str(noiseRMS)+', power:'+str(signalPower(noise)))
+    print('SNR:'+str(sigAmplitude/noiseRMS))
+    while 1:
+        plt.plot(scaleY(noiseFreeSignal),label='Original')
+        #plot_original_samples()
+        yy = smearSignal(noiseFreeSignal,gFloor)
+        plt.plot(scaleY(yy),label='+ noise')
+        legend = plt.legend(loc='upper right', shadow=True)
+        plt.ylabel(yLabel)
+        plt.xlabel('Frequency')
+        if yLabel == 'dBm': plt.ylim([-110, -60])
+        plt.show()
 
 

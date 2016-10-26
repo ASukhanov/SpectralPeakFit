@@ -2,9 +2,10 @@
     The fitting function is defined in func(xx,*par).
 '''
 #__version__ = 'v03 2016-10-13' #  
-__version__ = 'v04 2016-10-14' # gPeaks is flat array now.
-__version__ = 'v05 2016-10-17' # Some cleanup. peak_finder replaces find3Peaks.
-__version__ = 'v06 2016-10-23' # Major cleanup. Testing moved to separate file.
+#__version__ = 'v04 2016-10-14' # gPeaks is flat array now.
+#__version__ = 'v05 2016-10-17' # Some cleanup. peak_finder replaces find3Peaks.
+#__version__ = 'v06 2016-10-23' # Major cleanup. Testing moved to separate file.
+__version__ = 'v07 2016-10-26' # user defined function: amplitude2par added.
 
 import numpy as np
 from scipy.optimize import curve_fit
@@ -12,8 +13,8 @@ from scipy.optimize import curve_fit
 def gaussian(xx, mu, sig):
     return 1./(np.sqrt(2.*np.pi)*sig)*np.exp(-np.power((xx - mu)/sig, 2.)/2)
 #'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-# Fitting function
-#gNIterations = 0
+# Fitting function, user modified.
+
 def func(xx, *par):
     ''' Fitting function'''
     #global gNIterations
@@ -31,6 +32,9 @@ def func(xx, *par):
         sumy += yy
     sumy += par[0] # add gBaseLine
     return sumy
+    
+def amplitude2par(yy, sigma): #convert amplitude to function parameters of the single peak
+    return yy/gaussian(0,0,sigma)
 #,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 #'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 # Helper functions
