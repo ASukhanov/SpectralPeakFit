@@ -2,7 +2,8 @@
 '''
 #__version__ = 'v01 2016-10-23' # Extracted from curfit.py
 #__version__ = 'v02 2016-10-25' # gen_peaks parameters, print helpers, ipython example.
-__version__ = 'v03 2016-10-26' # scaleY: scale parameter added, default:'dBm'.
+#__version__ = 'v03 2016-10-26' # scaleY: scale parameter added, default:'dBm'.
+__version__ = 'v05 2016-10-27' # cf.gaussian replaced with cf.peak_shape, removed mu parameter in peak_shape
 
 import numpy as np
 from scipy.optimize import curve_fit
@@ -26,7 +27,7 @@ print('curfit_test default signal amplitude:'+str(sigAmp)+', noise floor:'+str(g
 gBaseLine = 0. # gBaseline have no sense for power spectral density plots as it is strictly 0.
 
 #'' set for fitting of power spectral density plots
-sf = sigAmp/cf.gaussian(0,0,peakSigma) 
+sf = sigAmp/cf.peak_shape(0,peakSigma) 
 ParsPerPeak = 3
 gGuess = [gBaseLine, 0.2,peakSigma*0.8,0.5*sf, 0.45,peakSigma*.8,sf, 0.75,peakSigma*0.8,0.5*sf]
 #,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
@@ -64,8 +65,8 @@ class cfTest():
         self.change_guess_sigmas(self.filterWidth)
         print 'filterWidth and guess sigmas changed to ', self.filterWidth
         
-    def scaleY(self,yy, scale='dBm'):
-    #def scaleY(self,yy, scale=''):
+    def scaleY(self,yy, scale='dBm'): # logarithmic Y scale for plotting
+    #def scaleY(self,yy, scale=''): # linear Y scale for plotting
         ''' Y-scaling of plots, uncomment one of two options: linear or logarithmic.'''
         if scale == 'dBm':
             self.yLabel='dBm'
@@ -150,7 +151,7 @@ class cfTest():
         # Create filter. Crop out 10% tails to speed up cross-correlation.
         #fullFilter = np.ones(100)/100 # flat filter
         self.change_filterWidth()
-        fullFilter = cf.gaussian(self.xx-0.5,0,self.filterWidth)
+        fullFilter = cf.peak_shape(self.xx-0.5,self.filterWidth)
         croppedArea = 0.1 * np.sum(fullFilter)
         fl = len(fullFilter)
         fHW = 0 # filter halfwidth
@@ -170,15 +171,14 @@ class cfTest():
 #'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 # The main function for debugging.
 #
-
 if __name__ == "__main__":
     # The code below is skipped if file is imported.
     # The best way is to run it in ipython.
     # ipython example:
     '''
-    import curfit_test
     import matplotlib.pyplot as plt
     import numpy as np
+    import curfit_test
     
     cft = curfit_test.cfTest()
     cft.run(block=False)

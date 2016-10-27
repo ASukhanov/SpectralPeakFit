@@ -5,36 +5,39 @@
 #__version__ = 'v04 2016-10-14' # gPeaks is flat array now.
 #__version__ = 'v05 2016-10-17' # Some cleanup. peak_finder replaces find3Peaks.
 #__version__ = 'v06 2016-10-23' # Major cleanup. Testing moved to separate file.
-__version__ = 'v07 2016-10-26' # user defined function: amplitude2par added.
+#__version__ = 'v07 2016-10-26' # user defined function: amplitude2par added.
+__version__ = 'v04 2016-10-27' # gaussian() replaced with peak_shape(), 
+
 
 import numpy as np
 from scipy.optimize import curve_fit
 
-def gaussian(xx, mu, sig):
-    return 1./(np.sqrt(2.*np.pi)*sig)*np.exp(-np.power((xx - mu)/sig, 2.)/2)
+
+def peak_shape(xx, halfWidth):
+    ''' Shape of the peak. The height is not important as it will be 
+    calibrated using amplitude2par() function. 
+    halfWidth is measure of the half width (sigma in the case of gaussian).'''
+    #return 1./(np.sqrt(2.*np.pi)*halfWidth)*np.exp(-np.power(xx/halfWidth, 2.)/2) # full-fledged gaussian
+    #return 1./(np.sqrt(2.*np.pi)*halfWidth)*np.exp(-((xx/halfWidth)**2)/2)
+    # note: 1./(halfWidth)*np.exp(-(xx/halfWidth)**2) would be twice faster
+    # to prove: timeit.timeit('import numpy as np; halfWidth,xx=1,1; 1./(halfWidth)*np.exp(-(xx/halfWidth)**2)', number=10000)
+    return 1./(halfWidth)*np.exp(-(xx/halfWidth)**2) # fitting time dropped from 12 ms to 7 ms!
 #'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 # Fitting function, user modified.
 
 def func(xx, *par):
     ''' Fitting function'''
-    #global gNIterations
     nx = len(xx)
-    #if gNIterations < 5:
-    #  print('parms#'+str(gNIterations)+':')
-    #  for i in par: print(str('%0.2g'%i)),
-    #  print('')
-    #gNIterations += 1
     nPeaks = 3
     sumy = np.zeros(nx)
     for ii in range(nPeaks):
-        #print par[nPeaks*ii+2]
-        yy = gaussian(xx,par[nPeaks*ii+1],par[nPeaks*ii+2])*par[nPeaks*ii+3]
+        yy = peak_shape(xx-par[nPeaks*ii+1],par[nPeaks*ii+2])*par[nPeaks*ii+3]
         sumy += yy
-    sumy += par[0] # add gBaseLine
+    sumy += par[0]
     return sumy
     
 def amplitude2par(yy, sigma): #convert amplitude to function parameters of the single peak
-    return yy/gaussian(0,0,sigma)
+    return yy/peak_shape(0,sigma)
 #,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 #'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 # Helper functions
