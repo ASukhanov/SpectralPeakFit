@@ -2,7 +2,7 @@
 Spectral density peak finding and fitting using python scipy.
 
 The peak finding and fitting functions in curfit.py are generic, can be used for any data.
-The peak generator peakgen generates 3 peaks and adds the power spectrum density, generated from the white noise (psd-transformed noise). 
+The peak generator peakgen generates 3 peaks and adds the power spectral density, generated from the white noise (psd-transformed noise). 
 
 --- Prerequisites:
 
@@ -14,7 +14,7 @@ filtering time: 0.060 ms.
 peak finding time: 0.3 ms.
 fitting time: 7.0 ms.
 
-Ty of processing 3 peaks:
+Typical result of processing 3 peaks:
 
 ![Alt text](curfit_result.png?raw=true "Result")
 
